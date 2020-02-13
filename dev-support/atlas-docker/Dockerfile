@@ -35,7 +35,7 @@ ENV PATH /usr/java/bin:/usr/local/apache-maven/bin:/usr/local/sbin:/usr/local/bi
 WORKDIR /root
 
 # Pull down Atlas and build it into /root/atlas-bin.
-RUN git clone https://github.com/usadamasa/atlas.git -b master
+RUN git clone https://github.com/usadamasa/atlas.git -b test/dockerbuild
 
 RUN echo 'package-lock=false' >> ./atlas/.npmrc
 
@@ -43,8 +43,6 @@ RUN echo 'package-lock.json' >> ./atlas/.gitignore
 
 # Memory requirements
 ENV MAVEN_OPTS "-Xms4g -Xmx4g"
-#RUN export MAVEN_OPTS="-Xms8g -Xmx8g"
-# Remove -DskipTests if unit tests are to be included
 RUN mvn install \
       -DskipTests=true \
       -Drat.skip=true \
