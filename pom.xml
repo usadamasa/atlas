@@ -645,7 +645,7 @@
 
     <properties>
         <!-- platform encoding override -->
-        <skipTests>false</skipTests>
+        <skipTests>true</skipTests>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <node.version>v0.10.30</node.version>
@@ -733,10 +733,10 @@
         <MaxPermGen>512m</MaxPermGen>
 
         <!-- skips checkstyle and find bugs -->
-        <skipCheck>false</skipCheck>
+        <skipCheck>true</skipCheck>
         <checkstyle.failOnViolation>false</checkstyle.failOnViolation>
-        <skipUTs>false</skipUTs>
-        <skipITs>false</skipITs>
+        <skipUTs>true</skipUTs>
+        <skipITs>true</skipITs>
         <skipDocs>true</skipDocs>
         <skipSite>true</skipSite>
         <skipEnunciate>false</skipEnunciate>

@@ -17,15 +17,15 @@
 FROM ubuntu:18.04
 
 # Install Git, which is missing from the Ubuntu base images.
-RUN apt-get update && apt-get install -y git python
+RUN apt-get update --fix-missing && apt-get install -y git python
 
 # Install Java.
-RUN apt-get update && apt-get install -y openjdk-8-jdk
+RUN apt-get update --fix-missing && apt-get install -y openjdk-8-jdk
 ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64
 
 # Install Maven.
 
-RUN apt-get update && apt-get install -y maven
+RUN apt-get update --fix-missing && apt-get install --fix-missing -y maven
 ENV MAVEN_HOME /usr/share/maven
 
 # Add Java and Maven to the path.
@@ -35,18 +35,29 @@ ENV PATH /usr/java/bin:/usr/local/apache-maven/bin:/usr/local/sbin:/usr/local/bi
 WORKDIR /root
 
 # Pull down Atlas and build it into /root/atlas-bin.
-RUN git clone https://github.com/apache/atlas.git -b master
+RUN git clone https://github.com/usadamasa/atlas.git -b master
 
 RUN echo 'package-lock=false' >> ./atlas/.npmrc
 
 RUN echo 'package-lock.json' >> ./atlas/.gitignore
 
 # Memory requirements
-ENV MAVEN_OPTS "-Xms2g -Xmx2g"
-# RUN export MAVEN_OPTS="-Xms2g -Xmx2g"
-
+ENV MAVEN_OPTS "-Xms4g -Xmx4g"
+#RUN export MAVEN_OPTS="-Xms8g -Xmx8g"
 # Remove -DskipTests if unit tests are to be included
-RUN mvn clean install -DskipTests -Pdist,embedded-hbase-solr -f ./atlas/pom.xml
+RUN mvn install \
+      -DskipTests=true \
+      -Drat.skip=true \
+      -DskipDocs=true \
+      -DskipCheck=true \
+      -DskipITs=true \
+      -DskipUTs=true \
+      -DskipSite=true \
+      -DskipEnunciate=true \
+      -Dfindbugs.skip=true \
+      -Pdist,embedded-hbase-solr \
+      -f ./atlas/pom.xml
+
 RUN mkdir -p atlas-bin
 RUN tar xzf /root/atlas/distro/target/*bin.tar.gz --strip-components 1 -C /root/atlas-bin
 
