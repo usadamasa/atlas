@@ -779,7 +779,6 @@
         <module>dashboardv2</module>
         <module>dashboardv3</module>
         <module>webapp</module>
-        <module>docs</module>
 
         <module>addons/hdfs-model</module>
         <module>plugin-classloader</module>
