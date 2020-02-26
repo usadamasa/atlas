@@ -18,7 +18,19 @@
 
 package org.apache.atlas.repository.audit;
 
-import com.google.common.annotations.VisibleForTesting;
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+
+import javax.inject.Singleton;
+
 import org.apache.atlas.ApplicationProperties;
 import org.apache.atlas.AtlasException;
 import org.apache.atlas.EntityAuditEvent;
@@ -30,13 +42,11 @@ import org.apache.atlas.model.audit.EntityAuditEventV2.EntityAuditActionV2;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -52,21 +62,14 @@ import org.apache.hadoop.hbase.regionserver.BloomType;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.core.annotation.Order;
+import org.springframework.stereotype.Component;
 
-import javax.inject.Singleton;
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-
+import com.google.auth.Credentials;
+import com.google.cloud.bigtable.config.CredentialFactory;
+import com.google.cloud.bigtable.hbase.BigtableConfiguration;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import com.google.common.annotations.VisibleForTesting;
 
 /**
  * HBase based repository for entity audit events
@@ -100,13 +103,13 @@ public class HBaseBasedAuditRepository extends AbstractStorageBasedAuditReposito
     public static final byte[] COLUMN_USER = Bytes.toBytes("u");
     public static final byte[] COLUMN_DEFINITION = Bytes.toBytes("f");
 
-    private static final String  AUDIT_REPOSITORY_MAX_SIZE_PROPERTY = "atlas.hbase.client.keyvalue.maxsize";
-    private static final String  AUDIT_EXCLUDE_ATTRIBUTE_PROPERTY   = "atlas.audit.hbase.entity";
-    private static final String  FIELD_SEPARATOR = ":";
-    private static final long    ATLAS_HBASE_KEYVALUE_DEFAULT_SIZE = 1024 * 1024;
+    private static final String AUDIT_REPOSITORY_MAX_SIZE_PROPERTY = "atlas.hbase.client.keyvalue.maxsize";
+    private static final String AUDIT_EXCLUDE_ATTRIBUTE_PROPERTY = "atlas.audit.hbase.entity";
+    private static final String FIELD_SEPARATOR = ":";
+    private static final long ATLAS_HBASE_KEYVALUE_DEFAULT_SIZE = 1024 * 1024;
     private static Configuration APPLICATION_PROPERTIES = null;
 
-    private static boolean       persistEntityDefinition;
+    private static boolean persistEntityDefinition;
 
     private Map<String, List<String>> auditExcludedAttributesCache = new HashMap<>();
 
@@ -117,6 +120,7 @@ public class HBaseBasedAuditRepository extends AbstractStorageBasedAuditReposito
             throw new RuntimeException(e);
         }
     }
+
     private TableName tableName;
     private Connection connection;
 
@@ -144,7 +148,7 @@ public class HBaseBasedAuditRepository extends AbstractStorageBasedAuditReposito
         Table table = null;
 
         try {
-            table          = connection.getTable(tableName);
+            table = connection.getTable(tableName);
             List<Put> puts = new ArrayList<>(events.size());
 
             for (int index = 0; index < events.size(); index++) {
@@ -188,7 +192,7 @@ public class HBaseBasedAuditRepository extends AbstractStorageBasedAuditReposito
         Table table = null;
 
         try {
-            table          = connection.getTable(tableName);
+            table = connection.getTable(tableName);
             List<Put> puts = new ArrayList<>(events.size());
 
             for (int index = 0; index < events.size(); index++) {
@@ -229,7 +233,7 @@ public class HBaseBasedAuditRepository extends AbstractStorageBasedAuditReposito
             LOG.debug("Listing events for entity id {}, starting timestamp {}, #records {}", entityId, startKey, n);
         }
 
-        Table         table   = null;
+        Table table = null;
         ResultScanner scanner = null;
 
         try {
@@ -243,9 +247,9 @@ public class HBaseBasedAuditRepository extends AbstractStorageBasedAuditReposito
              * small is set to true to optimise RPC calls as the scanner is created per request
              */
             Scan scan = new Scan().setReversed(true).setFilter(new PageFilter(n))
-                                  .setStopRow(Bytes.toBytes(entityId))
-                                  .setCaching(n)
-                                  .setSmall(true);
+                    .setStopRow(Bytes.toBytes(entityId))
+                    .setCaching(n)
+                    .setSmall(true);
 
             if (StringUtils.isEmpty(startKey)) {
                 //Set start row to entity id + max long value
@@ -429,7 +433,7 @@ public class HBaseBasedAuditRepository extends AbstractStorageBasedAuditReposito
             ret = auditExcludedAttributesCache.get(entityType);
         } else if (APPLICATION_PROPERTIES != null) {
             String[] excludeAttributes = APPLICATION_PROPERTIES.getStringArray(AUDIT_EXCLUDE_ATTRIBUTE_PROPERTY + "." +
-                    entityType + "." +  "attributes.exclude");
+                    entityType + "." + "attributes.exclude");
 
             if (excludeAttributes != null) {
                 ret = Arrays.asList(excludeAttributes);
@@ -443,7 +447,7 @@ public class HBaseBasedAuditRepository extends AbstractStorageBasedAuditReposito
 
     private String getResultString(Result result, byte[] columnName) {
         byte[] rawValue = result.getValue(COLUMN_FAMILY, columnName);
-        if ( rawValue != null) {
+        if (rawValue != null) {
             return Bytes.toString(rawValue);
         }
         return null;
@@ -462,7 +466,7 @@ public class HBaseBasedAuditRepository extends AbstractStorageBasedAuditReposito
     }
 
     private EntityAuditEventV2 fromKeyV2(byte[] keyBytes) {
-        String             key   = Bytes.toString(keyBytes);
+        String key = Bytes.toString(keyBytes);
         EntityAuditEventV2 event = new EntityAuditEventV2();
 
         if (StringUtils.isNotEmpty(key)) {
@@ -491,9 +495,17 @@ public class HBaseBasedAuditRepository extends AbstractStorageBasedAuditReposito
      * @throws AtlasException
      * @param atlasConf
      */
-    public static org.apache.hadoop.conf.Configuration getHBaseConfiguration(Configuration atlasConf) throws AtlasException {
-        Properties                           properties = ApplicationProperties.getSubsetAsProperties(atlasConf, CONFIG_PREFIX);
-        org.apache.hadoop.conf.Configuration hbaseConf  = HBaseConfiguration.create();
+    public static org.apache.hadoop.conf.Configuration getHBaseConfiguration(Configuration atlasConf)
+            throws AtlasException, IOException {
+        Properties properties = ApplicationProperties.getSubsetAsProperties(atlasConf, CONFIG_PREFIX);
+        String PROJECT_ID = "my-gcp-project-id";
+        String INSTANCE_ID = "my-bigtable-instance-id";
+        String APP_PROFILE_ID = "default";
+        org.apache.hadoop.conf.Configuration conf = BigtableConfiguration.configure(PROJECT_ID, INSTANCE_ID);
+        Credentials credentials = CredentialFactory.getApplicationDefaultCredential();
+
+        org.apache.hadoop.conf.Configuration hbaseConf = BigtableConfiguration.withCredentials(conf, credentials);
+        hbaseConf.set(BigtableOptionsFactory.APP_PROFILE_ID_KEY, APP_PROFILE_ID);
 
         for (String key : properties.stringPropertyNames()) {
             String value = properties.getProperty(key);
@@ -549,7 +561,8 @@ public class HBaseBasedAuditRepository extends AbstractStorageBasedAuditReposito
 
             byte[] filterValue = Bytes.toBytes(classificationUpdatesAction);
             BinaryPrefixComparator binaryPrefixComparator = new BinaryPrefixComparator(filterValue);
-            SingleColumnValueFilter filter = new SingleColumnValueFilter(COLUMN_FAMILY, COLUMN_ACTION, CompareFilter.CompareOp.EQUAL, binaryPrefixComparator);
+            SingleColumnValueFilter filter = new SingleColumnValueFilter(COLUMN_FAMILY, COLUMN_ACTION,
+                    CompareFilter.CompareOp.EQUAL, binaryPrefixComparator);
             Scan scan = new Scan().setFilter(filter).setTimeRange(fromTimestamp, toTimestamp);
 
             Result result;
@@ -580,12 +593,17 @@ public class HBaseBasedAuditRepository extends AbstractStorageBasedAuditReposito
     @Override
     public void start() throws AtlasException {
         Configuration configuration = ApplicationProperties.get();
-        startInternal(configuration, getHBaseConfiguration(configuration));
+        try {
+            startInternal(configuration, getHBaseConfiguration(configuration));
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new AtlasException(e);
+        }
     }
 
     @VisibleForTesting
     void startInternal(Configuration atlasConf,
-                       org.apache.hadoop.conf.Configuration hbaseConf) throws AtlasException {
+            org.apache.hadoop.conf.Configuration hbaseConf) throws AtlasException {
 
         String tableNameStr = atlasConf.getString(CONFIG_TABLE_NAME, DEFAULT_TABLE_NAME);
         tableName = TableName.valueOf(tableNameStr);
@@ -604,7 +622,8 @@ public class HBaseBasedAuditRepository extends AbstractStorageBasedAuditReposito
 
     @VisibleForTesting
     protected Connection createConnection(org.apache.hadoop.conf.Configuration hbaseConf) throws IOException {
-        return ConnectionFactory.createConnection(hbaseConf);
+        return BigtableConfiguration.connect(hbaseConf);
+//        return ConnectionFactory.createConnection(hbaseConf);
     }
 
     @Override

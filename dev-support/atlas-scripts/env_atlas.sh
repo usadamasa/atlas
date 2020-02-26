@@ -17,8 +17,8 @@
 #
 
 export ATLAS_URL=http://localhost:21000
-export ATLAS_USER=username
-export ATLAS_PASS=password
+export ATLAS_USER=admin
+export ATLAS_PASS=admin
 
 export JSON_FORMATTER="python -mjson.tool"
 export CURL_CMDLINE="curl -f "

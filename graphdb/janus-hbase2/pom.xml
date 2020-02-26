@@ -30,6 +30,18 @@
     <name>Apache Atlas JanusGraph-HBase2 Module</name>
     <packaging>jar</packaging>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.google.cloud</groupId>
+                <artifactId>libraries-bom</artifactId>
+                <version>2.8.0</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
         <dependency>
             <groupId>org.janusgraph</groupId>
@@ -43,11 +55,18 @@
             </exclusions>
         </dependency>
 
-         <dependency>
+        <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-common</artifactId>
             <version>${hadoop.version}</version>
             <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.cloud.bigtable</groupId>
+            <artifactId>bigtable-hbase-2.x</artifactId>
+            <version>1.12.1</version>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>

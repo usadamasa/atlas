@@ -250,9 +250,9 @@ atlas.graph.index.search.solr.wait-searcher=true
                 <hbase.embedded>true</hbase.embedded>
                 <solr.embedded>true</solr.embedded>
 
-                <hbase.dir>${project.build.directory}/hbase</hbase.dir>
-                <hbase.tar>https://archive.apache.org/dist/hbase/${hbase.version}/hbase-${hbase.version}-bin.tar.gz</hbase.tar>
-                <hbase.folder>hbase-${hbase.version}</hbase.folder>
+<!--                <hbase.dir>${project.build.directory}/hbase</hbase.dir>-->
+<!--                <hbase.tar>https://archive.apache.org/dist/hbase/${hbase.version}/hbase-${hbase.version}-bin.tar.gz</hbase.tar>-->
+<!--                <hbase.folder>hbase-${hbase.version}</hbase.folder>-->
 
                 <solr.dir>${project.build.directory}/solr</solr.dir>
                 <solr.tar>https://archive.apache.org/dist/lucene/solr/${solr.version}/solr-${solr.version}.tgz</solr.tar>
@@ -266,27 +266,27 @@ atlas.graph.index.search.solr.wait-searcher=true
                         <version>1.7</version>
                         <executions>
                             <!-- package hbase -->
-                            <execution>
-                                <id>hbase</id>
-                                <phase>generate-resources</phase>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                                <configuration>
-                                    <target name="Download HBase">
-                                        <mkdir dir="${hbase.dir}" />
-                                        <mkdir dir="${project.basedir}/hbase" />
-                                        <get src="${hbase.tar}" dest="${project.basedir}/hbase/${hbase.folder}.tar.gz" usetimestamp="true" verbose="true" skipexisting="true" />
-                                        <untar src="${project.basedir}/hbase/${hbase.folder}.tar.gz" dest="${project.build.directory}/hbase.temp" compression="gzip" />
-                                        <copy todir="${hbase.dir}">
-                                            <fileset dir="${project.build.directory}/hbase.temp/${hbase.folder}">
-                                                <include name="**/*" />
-                                            </fileset>
-                                        </copy>
-                                    </target>
-                                </configuration>
-                            </execution>
-                            <!-- package solr -->
+<!--                            <execution>-->
+<!--                                <id>hbase</id>-->
+<!--                                <phase>generate-resources</phase>-->
+<!--                                <goals>-->
+<!--                                    <goal>run</goal>-->
+<!--                                </goals>-->
+<!--                                <configuration>-->
+<!--                                    <target name="Download HBase">-->
+<!--                                        <mkdir dir="${hbase.dir}" />-->
+<!--                                        <mkdir dir="${project.basedir}/hbase" />-->
+<!--                                        <get src="${hbase.tar}" dest="${project.basedir}/hbase/${hbase.folder}.tar.gz" usetimestamp="true" verbose="true" skipexisting="true" />-->
+<!--                                        <untar src="${project.basedir}/hbase/${hbase.folder}.tar.gz" dest="${project.build.directory}/hbase.temp" compression="gzip" />-->
+<!--                                        <copy todir="${hbase.dir}">-->
+<!--                                            <fileset dir="${project.build.directory}/hbase.temp/${hbase.folder}">-->
+<!--                                                <include name="**/*" />-->
+<!--                                            </fileset>-->
+<!--                                        </copy>-->
+<!--                                    </target>-->
+<!--                                </configuration>-->
+<!--                            </execution>-->
+<!--                            &lt;!&ndash; package solr &ndash;&gt;-->
                             <execution>
                                 <id>solr</id>
                                 <phase>generate-resources</phase>

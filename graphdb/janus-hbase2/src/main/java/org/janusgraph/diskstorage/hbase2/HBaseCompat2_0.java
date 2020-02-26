@@ -26,6 +26,8 @@ import org.apache.hadoop.hbase.io.compress.Compression;
 
 import java.io.IOException;
 
+import com.google.cloud.bigtable.hbase.BigtableConfiguration;
+
 public class HBaseCompat2_0 implements HBaseCompat {
 
     @Override
@@ -43,7 +45,7 @@ public class HBaseCompat2_0 implements HBaseCompat {
     @Override
     public ConnectionMask createConnection(Configuration conf) throws IOException
     {
-        return new HConnection2_0(ConnectionFactory.createConnection(conf));
+        return new HConnection2_0(BigtableConfiguration.connect(conf));
     }
 
     @Override

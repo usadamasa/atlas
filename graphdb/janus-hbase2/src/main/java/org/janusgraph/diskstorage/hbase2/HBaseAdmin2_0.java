@@ -14,6 +14,11 @@
 
 package org.janusgraph.diskstorage.hbase2;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Admin;
@@ -27,20 +32,13 @@ import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
-public class HBaseAdmin2_0 implements AdminMask
-{
+public class HBaseAdmin2_0 implements AdminMask {
 
     private static final Logger log = LoggerFactory.getLogger(HBaseAdmin2_0.class);
 
     private final Admin adm;
 
-    public HBaseAdmin2_0(Admin adm)
-    {
+    public HBaseAdmin2_0(Admin adm) {
         this.adm = adm;
     }
 
@@ -51,8 +49,7 @@ public class HBaseAdmin2_0 implements AdminMask
      * @throws IOException
      */
     @Override
-    public void clearTable(String tableString, long timestamp) throws IOException
-    {
+    public void clearTable(String tableString, long timestamp) throws IOException {
         TableName tableName = TableName.valueOf(tableString);
 
         if (!adm.tableExists(tableName)) {
@@ -69,7 +66,7 @@ public class HBaseAdmin2_0 implements AdminMask
         scan.readVersions(1);
 
         try (final Table table = adm.getConnection().getTable(tableName);
-             final ResultScanner scanner = table.getScanner(scan)) {
+                final ResultScanner scanner = table.getScanner(scan)) {
             final Iterator<Result> iterator = scanner.iterator();
             final int batchSize = 1000;
             final List<Delete> deleteList = new ArrayList<>();
@@ -99,69 +96,60 @@ public class HBaseAdmin2_0 implements AdminMask
     }
 
     @Override
-    public TableDescriptor getTableDescriptor(String tableString) throws TableNotFoundException, IOException
-    {
+    public TableDescriptor getTableDescriptor(String tableString) throws TableNotFoundException, IOException {
         return adm.getDescriptor(TableName.valueOf(tableString));
     }
 
     @Override
-    public boolean tableExists(String tableString) throws IOException
-    {
+    public boolean tableExists(String tableString) throws IOException {
         return adm.tableExists(TableName.valueOf(tableString));
     }
 
     @Override
-    public void createTable(TableDescriptor desc) throws IOException
-    {
+    public void createTable(TableDescriptor desc) throws IOException {
         adm.createTable(desc);
     }
 
     @Override
-    public void createTable(TableDescriptor desc, byte[] startKey, byte[] endKey, int numRegions) throws IOException
-    {
+    public void createTable(TableDescriptor desc, byte[] startKey, byte[] endKey, int numRegions) throws IOException {
         adm.createTable(desc, startKey, endKey, numRegions);
     }
 
     @Override
-    public int getEstimatedRegionServerCount()
-    {
+    public int getEstimatedRegionServerCount() {
         int serverCount = -1;
-        try {
-            serverCount = adm.getClusterStatus().getServers().size();
-            log.debug("Read {} servers from HBase ClusterStatus", serverCount);
-        } catch (IOException e) {
-            log.debug("Unable to retrieve HBase cluster status", e);
-        }
+//        try {
+////            serverCount = adm.getClusterStatus().getServers().size();
+//        } catch (IOException e) {
+//            log.debug("Unable to retrieve HBase cluster status", e);
+//        }
+        serverCount = 1;
+        log.debug("Read {} servers from HBase ClusterStatus", serverCount);
         return serverCount;
     }
 
     @Override
-    public void disableTable(String tableString) throws IOException
-    {
+    public void disableTable(String tableString) throws IOException {
         adm.disableTable(TableName.valueOf(tableString));
     }
 
     @Override
-    public void enableTable(String tableString) throws IOException
-    {
+    public void enableTable(String tableString) throws IOException {
         adm.enableTable(TableName.valueOf(tableString));
     }
 
     @Override
-    public boolean isTableDisabled(String tableString) throws IOException
-    {
+    public boolean isTableDisabled(String tableString) throws IOException {
         return adm.isTableDisabled(TableName.valueOf(tableString));
     }
 
     @Override
-    public void addColumn(String tableString, ColumnFamilyDescriptor columnDescriptor) throws IOException
-    {
+    public void addColumn(String tableString, ColumnFamilyDescriptor columnDescriptor) throws IOException {
         adm.addColumnFamily(TableName.valueOf(tableString), columnDescriptor);
     }
 
     @Override
-    public void close() throws IOException
-    {
+    public void close() throws IOException {
         adm.close();
     }
 }
